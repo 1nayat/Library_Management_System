@@ -4,6 +4,6 @@
     {
         public int PublicationID { get; set; }
         public string? PublicationName { get; set; }
-        public DateTime EntryDate { get; set; }
+        public DateTime EntryDate { get; set; } 
     }
 }
