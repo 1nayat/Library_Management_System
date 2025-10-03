@@ -1,0 +1,14 @@
+﻿@model Library_Management_System.Models.User
+@{
+    ViewData["Title"] = "Delete Student";
+}
+
+<h2>Delete Student</h2>
+
+<p>Are you sure you want to delete student: <strong>@Model.Name</strong>?</p>
+
+<form asp-action="DeleteStudent" method="post">
+    <input type="hidden" asp-for="Id" />
+    <button type="submit" class="btn btn-danger">Delete</button>
+    <a class="btn btn-secondary" href="/Admin/Students">Cancel</a>
+</form>

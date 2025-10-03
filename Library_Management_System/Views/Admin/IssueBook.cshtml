@@ -1,0 +1,37 @@
+﻿@{
+    ViewData["Title"] = "Issue Book";
+}
+
+<h2>Issue Book</h2>
+
+<form asp-action="IssueBook" method="post">
+    <div class="form-group mb-2">
+        <label>Student</label>
+        <select name="studentId" class="form-control" required>
+            <option value="">-- Select Student --</option>
+            @foreach (var student in ViewBag.Students)
+            {
+                <option value="@student.Id">@student.Name (@student.Email)</option>
+            }
+        </select>
+    </div>
+
+    <div class="form-group mb-2">
+        <label>Book</label>
+        <select name="bookId" class="form-control" required>
+            <option value="">-- Select Book --</option>
+            @foreach (var book in ViewBag.Books)
+            {
+                <option value="@book.BookID">@book.BookName (Available: @book.AvailableQnt)</option>
+            }
+        </select>
+    </div>
+
+    <div class="form-group mb-2">
+        <label>Days to Rent</label>
+        <input type="number" name="days" class="form-control" required min="1" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Issue Book</button>
+    <a class="btn btn-secondary" href="/Admin/IssuedBooks">Cancel</a>
+</form>

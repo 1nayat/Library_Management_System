@@ -1,0 +1,33 @@
+﻿@model IEnumerable<Library_Management_System.Models.Rent>
+
+@{
+    ViewData["Title"] = "My Issued Books";
+}
+
+<h2>My Issued Books</h2>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Issue Date</th>
+            <th>Return Date</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var rent in Model)
+        {
+            <tr>
+                <td>@rent.Book?.BookName</td>
+                <td>@rent.Book?.Author</td>
+                <td>@rent.IssueDate.ToString("yyyy-MM-dd")</td>
+                <td>@rent.ReturnDate?.ToString("yyyy-MM-dd")</td>
+                <td>@(rent.Status == 1 ? "Issued" : "Returned")</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<a class="btn btn-secondary" href="/Student/Dashboard">Back to Dashboard</a>

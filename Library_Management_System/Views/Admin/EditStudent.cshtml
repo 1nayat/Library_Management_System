@@ -1,0 +1,24 @@
+﻿@model Library_Management_System.Models.User
+@{
+    ViewData["Title"] = "Edit Student";
+}
+
+<h2>Edit Student</h2>
+
+<form asp-action="EditStudent" method="post">
+    <input type="hidden" asp-for="Id" />
+    <div class="form-group mb-2">
+        <label>Name</label>
+        <input asp-for="Name" class="form-control" required />
+    </div>
+    <div class="form-group mb-2">
+        <label>Email</label>
+        <input asp-for="Email" type="email" class="form-control" required />
+    </div>
+    <div class="form-group mb-2">
+        <label>Password </label>
+        <input asp-for="PasswordHash" type="password" class="form-control" />
+    </div>
+    <button type="submit" class="btn btn-primary">Save Changes</button>
+    <a class="btn btn-secondary" href="/Admin/Students">Cancel</a>
+</form>

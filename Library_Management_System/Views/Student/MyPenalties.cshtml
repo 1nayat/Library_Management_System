@@ -1,0 +1,33 @@
+﻿@model IEnumerable<Library_Management_System.Models.Penalty>
+
+@{
+    ViewData["Title"] = "My Penalties";
+}
+
+<h2>My Penalties</h2>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Book</th>
+            <th>Penalty Amount</th>
+            <th>Details</th>
+            <th>Date</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var penalty in Model)
+        {
+            <tr>
+                <td>@penalty.BookName</td>
+                <td>@penalty.PenaltyAmount</td>
+                <td>@penalty.Detail</td>
+                <td>@penalty.EntryDate.ToString("yyyy-MM-dd")</td>
+                <td>@(penalty.IsPaid ? "Paid" : "Pending")</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<a class="btn btn-secondary" href="/Student/Dashboard">Back to Dashboard</a>

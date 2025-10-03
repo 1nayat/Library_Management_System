@@ -1,0 +1,75 @@
+﻿@using Library_Management_System.Pagination
+@model PaginatedList<Library_Management_System.Models.Rent>
+
+@{
+    ViewData["Title"] = "Issued Books";
+}
+
+<h2>Issued Books</h2>
+
+<div class="mb-2 d-flex justify-content-between">
+    <a class="btn btn-secondary" href="/Dashboard/Index">Back to Dashboard</a>
+</div>
+
+<form method="get" class="mb-3">
+    <div class="input-group">
+        <input type="text" name="search" value="@ViewBag.SearchTerm" class="form-control" placeholder="Search by book or student..." />
+        <button type="submit" class="btn btn-primary">Search</button>
+    </div>
+</form>
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Rent ID</th>
+            <th>Book Name</th>
+            <th>Student Name</th>
+            <th>Days</th>
+            <th>Issue Date</th>
+            <th>Return Date</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var rent in Model.Items)
+        {
+            <tr>
+                <td>@rent.RentID</td>
+                <td>@rent.BookName</td>
+                <td>@rent.StudentName</td>
+                <td>@rent.Days</td>
+                <td>@rent.IssueDate.ToString("yyyy-MM-dd")</td>
+                <td>@(rent.ReturnDate?.ToString("yyyy-MM-dd") ?? "-")</td>
+                <td>@(rent.Status == 1 ? "Issued" : "Returned")</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (Model.TotalPages > 1)
+{
+    <nav>
+        <ul class="pagination justify-content-center">
+            @if (Model.HasPreviousPage)
+            {
+                <li class="page-item">
+                    <a class="page-link" href="?search=@ViewBag.SearchTerm&page=@(Model.PageIndex - 1)">Previous</a>
+                </li>
+            }
+
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.PageIndex ? "active" : "")">
+                    <a class="page-link" href="?search=@ViewBag.SearchTerm&page=@i">@i</a>
+                </li>
+            }
+
+            @if (Model.HasNextPage)
+            {
+                <li class="page-item">
+                    <a class="page-link" href="?search=@ViewBag.SearchTerm&page=@(Model.PageIndex + 1)">Next</a>
+                </li>
+            }
+        </ul>
+    </nav>
+}

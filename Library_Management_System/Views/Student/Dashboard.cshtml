@@ -1,0 +1,21 @@
+﻿@* /Views/Student/Dashboard.cshtml *@
+@{
+    ViewData["Title"] = "Student Dashboard";
+}
+
+<h2>Hello, @ViewBag.StudentName!</h2>
+
+<div class="mb-3">
+    <p>Total Books in Library: @ViewBag.TotalBooks</p>
+    <p>Books You Have Issued: @ViewBag.MyIssued</p>
+    <p>Pending Penalties: @ViewBag.MyPenalties</p>
+</div>
+
+<div>
+    <a class="btn btn-primary" href="/Student/AvailableBooks">Browse Books</a>
+    <a class="btn btn-primary" href="/Student/MyBooks">My Issued Books</a>
+    <a class="btn btn-primary" href="/Student/MyPenalties">My Penalties</a>
+    <form asp-controller="Auth" asp-action="Logout" method="post" style="display:inline;">
+        <button type="submit" class="btn btn-danger">Logout</button>
+    </form>
+</div>

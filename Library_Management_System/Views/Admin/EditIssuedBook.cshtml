@@ -1,0 +1,48 @@
+﻿@model Library_Management_System.Models.Rent
+
+@{
+    ViewData["Title"] = "Edit Issued Book";
+}
+
+<h2>Edit Issued Book</h2>
+
+<form asp-action="EditIssuedBook" method="post">
+    <input type="hidden" asp-for="RentID" />
+
+    <div class="form-group mb-2">
+        <label>Book ID</label>
+        <input asp-for="BookID" class="form-control" readonly />
+    </div>
+
+    <div class="form-group mb-2">
+        <label>Student ID</label>
+        <input asp-for="UserID" class="form-control" readonly />
+    </div>
+
+
+    <div class="form-group mb-2">
+        <label>Issue Date</label>
+        <input asp-for="IssueDate" type="date" class="form-control" required />
+    </div>
+
+    <div class="form-group mb-2">
+        <label>Days</label>
+        <input asp-for="Days" type="number" class="form-control" required min="1" />
+    </div>
+
+    <div class="form-group mb-2">
+        <label>Return Date (auto-calculated)</label>
+        <input asp-for="ReturnDate" type="date" class="form-control" readonly />
+    </div>
+
+    <div class="form-group mb-2">
+        <label>Status</label>
+        <select asp-for="Status" class="form-control">
+            <option value="1">Issued</option>
+            <option value="0">Returned</option>
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save Changes</button>
+    <a class="btn btn-secondary" href="/Admin/IssuedBooks">Cancel</a>
+</form>

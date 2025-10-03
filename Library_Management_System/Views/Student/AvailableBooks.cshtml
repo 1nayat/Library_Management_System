@@ -1,0 +1,39 @@
+﻿@model IEnumerable<Library_Management_System.Models.Book>
+
+@{
+    ViewData["Title"] = "Available Books";
+}
+
+<h2>Available Books</h2>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Author</th>
+        
+            <th>Available Copies</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var book in Model)
+        {
+            <tr>
+                <td>@book.BookName</td>
+                <td>@book.Author</td>
+                
+                <td>@book.AvailableCopies</td>
+                <td>
+                    <form asp-controller="Student" asp-action="IssueBook" method="post" style="display:inline;">
+                        <input type="hidden" name="bookId" value="@book.BookID" />
+                        <button type="submit" class="btn btn-primary" @(book.AvailableCopies <= 0 ? "disabled" : "")>
+                            Issue Book
+                        </button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+

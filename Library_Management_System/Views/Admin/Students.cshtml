@@ -1,0 +1,83 @@
+﻿@using Library_Management_System.Pagination
+@model PaginatedList<Library_Management_System.Models.User>
+
+@{
+    ViewData["Title"] = "Students";
+}
+
+<h2>Students</h2>
+
+<div class="mb-2 d-flex justify-content-between">
+    <!-- Back to Dashboard -->
+    <a class="btn btn-secondary" href="/Dashboard/Index">Back to Dashboard</a>
+
+    <!-- Add Student -->
+    <a class="btn btn-success" href="/Admin/CreateStudent">Add Student</a>
+</div>
+
+<!-- Search Form -->
+<form method="get" class="mb-3">
+    <div class="input-group">
+        <input type="text" name="search" value="@ViewBag.SearchTerm" class="form-control" placeholder="Search students by name or email..." />
+        <button type="submit" class="btn btn-primary">Search</button>
+    </div>
+</form>
+
+<!-- Students Table -->
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Created At</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var student in Model.Items)
+        {
+            <tr>
+                <td>@student.Id</td>
+                <td>@student.Name</td>
+                <td>@student.Email</td>
+                <td>@student.Role</td>
+                <td>@student.CreatedAt.ToString("yyyy-MM-dd")</td>
+                <td>
+                    <a class="btn btn-sm btn-primary" href="/Admin/EditStudent/@student.Id">Edit</a>
+                    <a class="btn btn-sm btn-danger" href="/Admin/DeleteStudent/@student.Id" onclick="return confirm('Are you sure?')">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<!-- Pagination -->
+@if (Model.TotalPages > 1)
+{
+    <nav>
+        <ul class="pagination justify-content-center">
+            @if (Model.HasPreviousPage)
+            {
+                <li class="page-item">
+                    <a class="page-link" href="?search=@ViewBag.SearchTerm&page=@(Model.PageIndex - 1)">Previous</a>
+                </li>
+            }
+
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.PageIndex ? "active" : "")">
+                    <a class="page-link" href="?search=@ViewBag.SearchTerm&page=@i">@i</a>
+                </li>
+            }
+
+            @if (Model.HasNextPage)
+            {
+                <li class="page-item">
+                    <a class="page-link" href="?search=@ViewBag.SearchTerm&page=@(Model.PageIndex + 1)">Next</a>
+                </li>
+            }
+        </ul>
+    </nav>
+}

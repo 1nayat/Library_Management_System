@@ -1,0 +1,54 @@
+﻿@model IEnumerable<Library_Management_System.Models.Penalty>
+
+@{
+    ViewData["Title"] = "Penalties";
+}
+
+<h2>Penalties</h2>
+
+<div class="mb-3">
+    <a asp-action="Penalties" asp-route-status="all" class="btn @(ViewBag.StatusFilter == "all" ? "btn-primary" : "btn-secondary")">All</a>
+    <a asp-action="Penalties" asp-route-status="unpaid" class="btn @(ViewBag.StatusFilter == "unpaid" ? "btn-primary" : "btn-secondary")">Unpaid</a>
+    <a asp-action="Penalties" asp-route-status="paid" class="btn @(ViewBag.StatusFilter == "paid" ? "btn-primary" : "btn-secondary")">Paid</a>
+</div>
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Penalty ID</th>
+            <th>Student Name</th>
+            <th>Book</th>
+            <th>Price</th>
+            <th>Penalty Amount</th>
+            <th>Detail</th>
+            <th>Entry Date</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var penalty in Model)
+        {
+            <tr>
+                <td>@penalty.PenaltyID</td>
+                <td>@penalty.StudentName</td>
+                <td>@penalty.BookName</td>
+                <td>@penalty.Price</td>
+                <td>@penalty.PenaltyAmount</td>
+                <td>@penalty.Detail</td>
+                <td>@penalty.EntryDate.ToString("yyyy-MM-dd")</td>
+                <td>@(penalty.IsPaid ? "Paid" : "Unpaid")</td>
+                <td>
+                    @if (!penalty.IsPaid)
+                    {
+                        <form asp-action="MarkPenaltyAsPaid" method="post" style="display:inline"
+                              onsubmit="return confirm('Are you sure you want to mark this penalty as paid?');">
+                            <input type="hidden" name="id" value="@penalty.PenaltyID" />
+                            <button type="submit" class="btn btn-success btn-sm">Mark as Paid</button>
+                        </form>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
