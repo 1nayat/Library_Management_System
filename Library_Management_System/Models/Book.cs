@@ -13,7 +13,7 @@
         public int AvailableQnt { get; set; }
         public int RentQnt { get; set; }
         public string? Image { get; set; }
-        public string? BookPDF { get; set; }
+   
         public DateTime EntryDate { get; set; }
         public int AvailableCopies { get; set; } // new
 

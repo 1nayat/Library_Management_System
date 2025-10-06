@@ -46,21 +46,25 @@ namespace Library_Management_System.Controllers
 
             return View();
         }
-        [Authorize(Roles = "Student")]
-        public async Task<IActionResult> AvailableBooks()
-        {
-            var allBooks = await _bookRepository.GetAllAsync();
-            return View(allBooks); 
-        }
+
         [HttpPost]
         [Authorize(Roles = "Student")]
         public async Task<IActionResult> IssueBook(int bookId)
         {
             var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null || !int.TryParse(userIdClaim, out int userId)) 
+            if (userIdClaim == null || !int.TryParse(userIdClaim, out int userId))
                 return RedirectToAction("Login", "Auth");
 
-            await _rentRepository.IssueBookAsync(userId, bookId);
+            try
+            {
+                await _rentRepository.IssueBookAsync(userId, bookId);
+                TempData["SuccessMessage"] = "Book issued successfully!";
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["ErrorMessage"] = ex.Message; 
+            }
+           
 
             return RedirectToAction("AvailableBooks");
         }
@@ -89,6 +93,20 @@ namespace Library_Management_System.Controllers
             return View(penalties);
         }
 
+        public async Task<IActionResult> AvailableBooks(string? search = "", int page = 1)
+        {
+            int pageSize = 10;
+
+            var (books, totalCount) = await _bookRepository.GetPaginatedAvailableBooksAsync(search, page, pageSize);
+
+            ViewBag.Search = search;
+            ViewBag.Page = page;
+            ViewBag.PageSize = pageSize;
+            ViewBag.TotalCount = totalCount;
+            ViewBag.TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+            return View(books);
+        }
 
     }
 }

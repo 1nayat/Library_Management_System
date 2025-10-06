@@ -12,5 +12,8 @@ namespace Library_Management_System.Repositories
         Task DeleteAsync(int id);
         Task<IEnumerable<Book>> GetAllAvailableAsync();
         Task<PaginatedList<Book>> GetPaginatedBooksAsync(string search, int page, int pageSize);
+
+        Task<(IEnumerable<Book> Books, int TotalCount)> GetPaginatedAvailableBooksAsync(string? search, int page, int pageSize);
+
     }
 }

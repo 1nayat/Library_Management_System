@@ -2,18 +2,36 @@
 
 @{
     ViewData["Title"] = "Penalties";
+
+    var currentPage = ViewBag.Page ?? 1;
+    var totalPages = ViewBag.TotalPages ?? 1;
+    string status = ViewBag.StatusFilter ?? "all";
+    string search = ViewBag.Search ?? "";
 }
 
-<h2>Penalties</h2>
+<h2 class="mb-3">Penalties</h2>
 
-<div class="mb-3">
-    <a asp-action="Penalties" asp-route-status="all" class="btn @(ViewBag.StatusFilter == "all" ? "btn-primary" : "btn-secondary")">All</a>
-    <a asp-action="Penalties" asp-route-status="unpaid" class="btn @(ViewBag.StatusFilter == "unpaid" ? "btn-primary" : "btn-secondary")">Unpaid</a>
-    <a asp-action="Penalties" asp-route-status="paid" class="btn @(ViewBag.StatusFilter == "paid" ? "btn-primary" : "btn-secondary")">Paid</a>
-</div>
+<!-- 🔍 Search + Filter Controls -->
+<form method="get" asp-action="Penalties" class="row mb-3">
+    <div class="col-md-4">
+        <input type="text" name="search" value="@search" class="form-control" placeholder="Search by student or book..." />
+    </div>
+    <div class="col-md-6">
+        <a asp-action="Penalties" asp-route-status="all" asp-route-search="@search"
+           class="btn @(status == "all" ? "btn-primary" : "btn-outline-primary") me-2">All</a>
+        <a asp-action="Penalties" asp-route-status="unpaid" asp-route-search="@search"
+           class="btn @(status == "unpaid" ? "btn-primary" : "btn-outline-primary") me-2">Unpaid</a>
+        <a asp-action="Penalties" asp-route-status="paid" asp-route-search="@search"
+           class="btn @(status == "paid" ? "btn-primary" : "btn-outline-primary")">Paid</a>
+    </div>
+    <div class="col-md-2 text-end">
+        <button type="submit" class="btn btn-success">Search</button>
+    </div>
+</form>
 
-<table class="table table-bordered table-striped">
-    <thead>
+<!-- 📋 Penalty Table -->
+<table class="table table-bordered table-striped align-middle">
+    <thead class="table-dark">
         <tr>
             <th>Penalty ID</th>
             <th>Student Name</th>
@@ -23,32 +41,91 @@
             <th>Detail</th>
             <th>Entry Date</th>
             <th>Status</th>
-            <th>Actions</th>
+            <th class="text-center">Actions</th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var penalty in Model)
+        @if (!Model.Any())
         {
             <tr>
-                <td>@penalty.PenaltyID</td>
-                <td>@penalty.StudentName</td>
-                <td>@penalty.BookName</td>
-                <td>@penalty.Price</td>
-                <td>@penalty.PenaltyAmount</td>
-                <td>@penalty.Detail</td>
-                <td>@penalty.EntryDate.ToString("yyyy-MM-dd")</td>
-                <td>@(penalty.IsPaid ? "Paid" : "Unpaid")</td>
-                <td>
-                    @if (!penalty.IsPaid)
-                    {
-                        <form asp-action="MarkPenaltyAsPaid" method="post" style="display:inline"
-                              onsubmit="return confirm('Are you sure you want to mark this penalty as paid?');">
-                            <input type="hidden" name="id" value="@penalty.PenaltyID" />
-                            <button type="submit" class="btn btn-success btn-sm">Mark as Paid</button>
-                        </form>
-                    }
-                </td>
+                <td colspan="9" class="text-center text-muted">No penalties found.</td>
             </tr>
+        }
+        else
+        {
+            @foreach (var penalty in Model)
+            {
+                <tr>
+                    <td>@penalty.PenaltyID</td>
+                    <td>@penalty.StudentName</td>
+                    <td>@penalty.BookName</td>
+                    <td>@penalty.Price</td>
+                    <td>@penalty.PenaltyAmount</td>
+                    <td>@penalty.Detail</td>
+                    <td>@penalty.EntryDate.ToString("yyyy-MM-dd")</td>
+                    <td>
+                        @if (penalty.IsPaid)
+                        {
+                            <span class="badge bg-success">Paid</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger">Unpaid</span>
+                        }
+                    </td>
+                    <td class="text-center">
+                        @if (!penalty.IsPaid)
+                        {
+                            <form asp-action="MarkPenaltyAsPaid" method="post" style="display:inline"
+                                  onsubmit="return confirm('Are you sure you want to mark this penalty as paid?');">
+                                <input type="hidden" name="id" value="@penalty.PenaltyID" />
+                                <button type="submit" class="btn btn-success btn-sm">Mark as Paid</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
         }
     </tbody>
 </table>
+
+<!-- 🔢 Pagination -->
+@if (totalPages > 1)
+{
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            @if (currentPage > 1)
+            {
+                <li class="page-item">
+                    <a class="page-link"
+                       asp-action="Penalties"
+                       asp-route-status="@status"
+                       asp-route-search="@search"
+                       asp-route-page="@(currentPage - 1)">Previous</a>
+                </li>
+            }
+
+            @for (int i = 1; i <= totalPages; i++)
+            {
+                <li class="page-item @(i == currentPage ? "active" : "")">
+                    <a class="page-link"
+                       asp-action="Penalties"
+                       asp-route-status="@status"
+                       asp-route-search="@search"
+                       asp-route-page="@i">@i</a>
+                </li>
+            }
+
+            @if (currentPage < totalPages)
+            {
+                <li class="page-item">
+                    <a class="page-link"
+                       asp-action="Penalties"
+                       asp-route-status="@status"
+                       asp-route-search="@search"
+                       asp-route-page="@(currentPage + 1)">Next</a>
+                </li>
+            }
+        </ul>
+    </nav>
+}

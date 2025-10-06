@@ -7,24 +7,26 @@
 <form asp-action="IssueBook" method="post">
     <div class="form-group mb-2">
         <label>Student</label>
-        <select name="studentId" class="form-control" required>
-            <option value="">-- Select Student --</option>
+        <input list="studentList" id="studentInput" class="form-control" placeholder="Search Student..." required />
+        <input type="hidden" name="studentId" id="studentId" />
+        <datalist id="studentList">
             @foreach (var student in ViewBag.Students)
             {
-                <option value="@student.Id">@student.Name (@student.Email)</option>
+                <option data-id="@student.Id" value="@student.Name (@student.Email)"></option>
             }
-        </select>
+        </datalist>
     </div>
 
     <div class="form-group mb-2">
         <label>Book</label>
-        <select name="bookId" class="form-control" required>
-            <option value="">-- Select Book --</option>
+        <input list="bookList" id="bookInput" class="form-control" placeholder="Search Book..." required />
+        <input type="hidden" name="bookId" id="bookId" />
+        <datalist id="bookList">
             @foreach (var book in ViewBag.Books)
             {
-                <option value="@book.BookID">@book.BookName (Available: @book.AvailableQnt)</option>
+                <option data-id="@book.BookID" value="@book.BookName (Available: @book.AvailableQnt)"></option>
             }
-        </select>
+        </datalist>
     </div>
 
     <div class="form-group mb-2">
@@ -35,3 +37,23 @@
     <button type="submit" class="btn btn-primary">Issue Book</button>
     <a class="btn btn-secondary" href="/Admin/IssuedBooks">Cancel</a>
 </form>
+
+<script>
+    function setupDatalist(inputId, hiddenId, datalistId) {
+        const input = document.getElementById(inputId);
+        const hidden = document.getElementById(hiddenId);
+        const options = document.querySelectorAll(`#${datalistId} option`);
+
+        input.addEventListener('input', function () {
+            hidden.value = ''; 
+            options.forEach(option => {
+                if (option.value === input.value) {
+                    hidden.value = option.dataset.id; 
+                }
+            });
+        });
+    }
+
+    setupDatalist('studentInput', 'studentId', 'studentList');
+    setupDatalist('bookInput', 'bookId', 'bookList');
+</script>

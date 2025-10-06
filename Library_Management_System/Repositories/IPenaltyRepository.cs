@@ -12,6 +12,8 @@ namespace Library_Management_System.Repositories
 
         Task MarkAsPaidAsync(int penaltyId);
         Task<IEnumerable<Penalty>> GetByUserIdAsync(int userId);
+        Task<(IEnumerable<Penalty> Penalties, int TotalCount)> GetPaginatedAsync(string? status, string? search, int page, int pageSize);
+
 
     }
 }

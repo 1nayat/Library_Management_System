@@ -8,7 +8,7 @@
 <h2>Issued Books</h2>
 
 <div class="mb-2 d-flex justify-content-between">
-    <a class="btn btn-secondary" href="/Dashboard/Index">Back to Dashboard</a>
+    <a class="btn btn-secondary" asp-controller="Admin" asp-action="Dashboard">Back to Dashboard</a>
 </div>
 
 <form method="get" class="mb-3">
@@ -28,6 +28,7 @@
             <th>Issue Date</th>
             <th>Return Date</th>
             <th>Status</th>
+            <th>Actions</th>
         </tr>
     </thead>
     <tbody>
@@ -41,6 +42,21 @@
                 <td>@rent.IssueDate.ToString("yyyy-MM-dd")</td>
                 <td>@(rent.ReturnDate?.ToString("yyyy-MM-dd") ?? "-")</td>
                 <td>@(rent.Status == 1 ? "Issued" : "Returned")</td>
+                <td>
+                    <a class="btn btn-sm btn-primary" href="/Admin/EditIssuedBook/@rent.RentID">Edit</a>
+
+                    @if (rent.Status == 1)
+                    {
+                        <form asp-action="ReturnBook" method="post" style="display:inline;">
+                            <input type="hidden" name="rentId" value="@rent.RentID" />
+                            <button type="submit" class="btn btn-sm btn-success">Return</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <span class="text-muted">No Action</span>
+                    }
+                </td>
             </tr>
         }
     </tbody>

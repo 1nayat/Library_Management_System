@@ -54,7 +54,17 @@
         <input asp-for="RentQnt" type="number" class="form-control" />
     </div>
 
-  
+    <!-- Book Image Upload -->
+    <div class="form-group mb-2">
+        <label>Book Image</label>
+        <input type="file" name="ImageFile" class="form-control" />
+        @if (!string.IsNullOrEmpty(Model.Image))
+        {
+            <div class="mt-2">
+                <img src="@Model.Image" alt="@Model.BookName" style="height:100px;" />
+            </div>
+        }
+    </div>
 
     <button type="submit" class="btn btn-primary">Save Changes</button>
     <a class="btn btn-secondary" href="/Admin/Books">Cancel</a>

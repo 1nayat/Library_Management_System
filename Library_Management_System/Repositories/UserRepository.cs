@@ -102,7 +102,7 @@ namespace Library_Management_System.Repositories
                 sql,
                 new { Search = $"%{search}%", Offset = (page - 1) * pageSize, PageSize = pageSize });
 
-            // Total count for pagination
+          
             var countSql = "SELECT COUNT(*) FROM Users4 WHERE Role = 'Student'";
             if (!string.IsNullOrEmpty(search))
                 countSql += " AND Name LIKE @Search";

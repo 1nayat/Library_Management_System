@@ -14,7 +14,7 @@ namespace Library_Management_System.Repositories
         public async Task<IEnumerable<Rent>> GetAllAsync() =>
             await _db.QueryAsync<Rent>("SELECT * FROM Rent4");
 
-        public async Task<Rent?> GetByIdAsync(int id) =>
+        public async Task<Rent?> GetByIdAsync(int id ) =>
             await _db.QuerySingleOrDefaultAsync<Rent>("SELECT * FROM Rent4 WHERE RentID=@Id", new { Id = id });
 
         public async Task InsertAsync(Rent rent)
@@ -42,7 +42,7 @@ namespace Library_Management_System.Repositories
         FROM Rent4 r
         INNER JOIN Book4 b ON r.BookID = b.BookID
         INNER JOIN Users4 u ON r.UserID = u.Id
-        WHERE r.Status = 1"; 
+        WHERE r.Status = 1";
 
             return await _db.QueryAsync<Rent>(sql);
         }
@@ -59,20 +59,20 @@ namespace Library_Management_System.Repositories
             return await _db.QueryAsync<Rent>(sql, new { UserID = userId });
         }
 
-      
+
         public async Task IssueBookAsync(int userId, int bookId, int days = 14)
         {
         
             var available = await _db.QuerySingleOrDefaultAsync<int>(
-                "SELECT AvailableCopies FROM Book4 WHERE BookID = @BookID", new { BookID = bookId });
+                "SELECT AvailableQnt FROM Book4 WHERE BookID = @BookID", new { BookID = bookId });
 
             if (available <= 0)
                 throw new InvalidOperationException("No available copies for this book.");
 
-          
+            
             var sqlInsert = @"
-                INSERT INTO Rent4 (BookID, UserID, Days, IssueDate, ReturnDate, Status)
-                VALUES (@BookID, @UserID, @Days, @IssueDate, @ReturnDate, @Status)";
+        INSERT INTO Rent4 (BookID, UserID, Days, IssueDate, ReturnDate, Status)
+        VALUES (@BookID, @UserID, @Days, @IssueDate, @ReturnDate, @Status)";
 
             await _db.ExecuteAsync(sqlInsert, new
             {
@@ -81,14 +81,15 @@ namespace Library_Management_System.Repositories
                 Days = days,
                 IssueDate = DateTime.UtcNow,
                 ReturnDate = DateTime.UtcNow.AddDays(days),
-                Status = 1 
+                Status = 1
             });
 
-           
+            
             await _db.ExecuteAsync(
-                "UPDATE Book4 SET AvailableCopies = AvailableCopies - 1 WHERE BookID = @BookID",
+                "UPDATE Book4 SET AvailableQnt = AvailableQnt - 1 WHERE BookID = @BookID",
                 new { BookID = bookId });
         }
+
         public async Task<IEnumerable<Rent>> GetIssuedBooksByUserIdAsync(int userId)
         {
             const string sql = @"
@@ -102,7 +103,7 @@ namespace Library_Management_System.Repositories
                 sql,
                 (rent, book) =>
                 {
-                    rent.Book = book; 
+                    rent.Book = book;
                     return rent;
                 },
                 new { UserID = userId },
@@ -111,7 +112,7 @@ namespace Library_Management_System.Repositories
         }
         public async Task<PaginatedList<Rent>> GetPaginatedIssuedBooksAsync(string search, int page, int pageSize)
         {
-            // Base query for issued books
+          
             var sql = @"
                 SELECT r.RentID, r.BookID, r.UserID, r.Days, r.IssueDate, r.ReturnDate, r.Status,
                        b.BookName, u.Name AS StudentName
@@ -120,7 +121,7 @@ namespace Library_Management_System.Repositories
                 INNER JOIN Users4 u ON r.UserID = u.Id
                 WHERE r.Status = 1";
 
-            // Search filter
+        
             if (!string.IsNullOrEmpty(search))
                 sql += " AND (b.BookName LIKE @Search OR u.Name LIKE @Search)";
 
@@ -130,7 +131,7 @@ namespace Library_Management_System.Repositories
                 sql,
                 new { Search = $"%{search}%", Offset = (page - 1) * pageSize, PageSize = pageSize });
 
-            // Total count for pagination
+           
             var countSql = @"
                 SELECT COUNT(*)
                 FROM Rent4 r

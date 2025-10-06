@@ -118,7 +118,7 @@ namespace Library_Management_System.Controllers
             var audience = jwtSection.GetValue<string>("Audience");
             var expiryMinutes = jwtSection.GetValue<int>("ExpiryMinutes");
 
-            var keyBytes = Encoding.UTF8.GetBytes(key);
+            var keyBytes = Encoding.UTF8.GetBytes(key!);
 
             var claims = new List<Claim>
             {

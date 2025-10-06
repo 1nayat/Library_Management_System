@@ -1,26 +1,112 @@
-﻿@{
-    ViewData["Title"] = "Admin Dashboard";
-}
+﻿@* /Views/Admin/Dashboard.cshtml *@
+<div class="container mt-4">
+    @{
+        ViewData["Title"] = "Admin Dashboard";
+    }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2>Admin Dashboard</h2>
-    <form asp-controller="Auth" asp-action="Logout" method="post">
-        <button type="submit" class="btn btn-danger">Logout</button>
-    </form>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold">Admin Dashboard</h2>
+        <form asp-controller="Auth" asp-action="Logout" method="post">
+            <button type="submit" class="btn btn-danger btn-lg dashboard-btn">
+                <i class="bi bi-box-arrow-right me-2"></i> Logout
+            </button>
+        </form>
+    </div>
+
+    <div class="row mb-4">
+        <!-- Total Students -->
+        <div class="col-md-4 mb-3">
+            <div class="card text-white bg-primary h-100 shadow-sm dashboard-card">
+                <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                    <i class="bi bi-people-fill fs-1 mb-2"></i>
+                    <h5 class="card-title">Total Students</h5>
+                    <p class="card-text fs-4">@ViewBag.TotalStudents</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Books -->
+        <div class="col-md-4 mb-3">
+            <div class="card text-white bg-success h-100 shadow-sm dashboard-card">
+                <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                    <i class="bi bi-book-fill fs-1 mb-2"></i>
+                    <h5 class="card-title">Total Books</h5>
+                    <p class="card-text fs-4">@ViewBag.TotalBooks</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Issued Books -->
+        <div class="col-md-4 mb-3">
+            <div class="card text-white bg-warning h-100 shadow-sm dashboard-card">
+                <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                    <i class="bi bi-journal-check fs-1 mb-2"></i>
+                    <h5 class="card-title">Issued Books</h5>
+                    <p class="card-text fs-4">@ViewBag.TotalIssued</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-center gap-3 flex-wrap">
+        <a class="btn btn-primary btn-lg dashboard-btn" href="/Admin/Students">
+            <i class="bi bi-people me-2"></i> Manage Students
+        </a>
+        <a class="btn btn-success btn-lg dashboard-btn" href="/Admin/Books">
+            <i class="bi bi-book me-2"></i> Manage Books
+        </a>
+        <a class="btn btn-warning btn-lg dashboard-btn" href="/Admin/IssuedBooks">
+            <i class="bi bi-journal-check me-2"></i> Manage Issued Books
+        </a>
+        <a class="btn btn-danger btn-lg dashboard-btn" href="/Admin/Penalties">
+            <i class="bi bi-exclamation-triangle me-2"></i> Manage Penalties
+        </a>
+        <a class="btn btn-info btn-lg dashboard-btn" href="/Admin/IssueBook">
+            <i class="bi bi-plus-circle me-2"></i> Issue New Book
+        </a>
+    </div>
 </div>
 
-<div class="mb-3">
-    <p>Total Students: @ViewBag.TotalStudents</p>
-    <p>Total Books: @ViewBag.TotalBooks</p>
-    <p>Total Issued Books: @ViewBag.TotalIssued</p>
-</div>
+<style>
+    h2 {
+        font-weight: 700;
+    }
 
-<div>
-    <a class="btn btn-primary" href="/Admin/Students">Manage Students</a>
-    <a class="btn btn-primary" href="/Admin/Books">Manage Books</a>
-    <a class="btn btn-primary" href="/Admin/IssuedBooks">Manage Issued Books</a>
-    <a class="btn btn-primary" href="/Admin/Penalties">Manage Penalties</a>
-    <a class="btn btn-success" href="/Admin/IssueBook">Issue New Book</a>
+    /* Card hover effect */
+    .dashboard-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        cursor: pointer;
+    }
 
+        .dashboard-card:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
+        }
 
-</div>
+        /* Icon animation */
+        .dashboard-card i {
+            font-size: 3rem;
+            transition: transform 0.3s ease;
+        }
+
+        .dashboard-card:hover i {
+            transform: rotate(10deg) scale(1.2);
+        }
+
+    /* Button hover effect */
+    .dashboard-btn {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+        .dashboard-btn:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+  
+
+    
+</style>
+
+<!-- Bootstrap Icons CDN if not included in layout -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">

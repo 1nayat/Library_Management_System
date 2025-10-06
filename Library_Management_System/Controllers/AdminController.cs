@@ -41,14 +41,13 @@ namespace Library_Management_System.Controllers
 
         public async Task<IActionResult> Students(string search, int page = 1)
         {
-            int pageSize = 10; // number of students per page
+            int pageSize = 10; 
 
-            // Call the repository method that returns PaginatedList<User>
             var students = await _userRepository.GetPaginatedStudentsAsync(search, page, pageSize);
 
             ViewBag.SearchTerm = search ?? "";
 
-            return View(students); // now matches the view type
+            return View(students); 
         }
 
         public IActionResult CreateStudent() => View();
@@ -71,7 +70,7 @@ namespace Library_Management_System.Controllers
             if (student == null) return NotFound();
             return View(student);
         }
-
+        ///--------------------------------------------------------------
         [HttpPost]
         public async Task<IActionResult> EditStudent(User student)
         {
@@ -97,7 +96,7 @@ namespace Library_Management_System.Controllers
 
             return View(student);
         }
-
+//----------------------------------------------------------
 
         public async Task<IActionResult> DeleteStudent(int id)
         {
@@ -105,7 +104,7 @@ namespace Library_Management_System.Controllers
             return RedirectToAction(nameof(Students));
         }
 
-
+      
         public async Task<IActionResult> Books(string search, int page = 1)
         {
             int pageSize = 10;
@@ -115,17 +114,35 @@ namespace Library_Management_System.Controllers
             return View(paginatedBooks);
         }
         public IActionResult CreateBook() => View();
-
+        //------------------------------------------------------
         [HttpPost]
-        public async Task<IActionResult> CreateBook(Book book)
+        public async Task<IActionResult> CreateBook(Book book, IFormFile? ImageFile)
         {
             if (ModelState.IsValid)
             {
+                if (ImageFile != null && ImageFile.Length > 0)
+                {
+                    
+                    var uploads = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/books");
+                    if (!Directory.Exists(uploads)) Directory.CreateDirectory(uploads);
+
+                    var fileName = Guid.NewGuid() + Path.GetExtension(ImageFile.FileName);
+                    var filePath = Path.Combine(uploads, fileName);
+
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await ImageFile.CopyToAsync(stream);
+                    }
+
+                    book.Image = "/images/books/" + fileName; 
+                }
+
                 await _bookRepository.InsertAsync(book);
                 return RedirectToAction(nameof(Books));
             }
             return View(book);
         }
+
 
         public async Task<IActionResult> EditBook(int id)
         {
@@ -133,17 +150,43 @@ namespace Library_Management_System.Controllers
             if (book == null) return NotFound();
             return View(book);
         }
-
+//---------------------------------------------------
         [HttpPost]
-        public async Task<IActionResult> EditBook(Book book)
+        public async Task<IActionResult> EditBook(Book book, IFormFile? ImageFile)
         {
             if (ModelState.IsValid)
             {
+                var existingBook = await _bookRepository.GetByIdAsync(book.BookID);
+                if (existingBook == null) return NotFound();
+
+                if (ImageFile != null && ImageFile.Length > 0)
+                {
+                  
+                    var uploads = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/books");
+                    if (!Directory.Exists(uploads)) Directory.CreateDirectory(uploads);
+
+                    var fileName = Guid.NewGuid() + Path.GetExtension(ImageFile.FileName);
+                    var filePath = Path.Combine(uploads, fileName);
+
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await ImageFile.CopyToAsync(stream);
+                    }
+
+                    book.Image = "/images/books/" + fileName;
+                }
+                else
+                {
+                  
+                    book.Image = existingBook.Image;
+                }
+
                 await _bookRepository.UpdateAsync(book);
                 return RedirectToAction(nameof(Books));
             }
             return View(book);
         }
+
 
         public async Task<IActionResult> DeleteBook(int id)
         {
@@ -158,7 +201,7 @@ namespace Library_Management_System.Controllers
             if (rent == null) return NotFound();
             return View(rent);
         }
-
+//-----------------------------------------------------------
         [HttpPost]
         public async Task<IActionResult> EditIssuedBook(Rent rent)
         {
@@ -184,18 +227,18 @@ namespace Library_Management_System.Controllers
 
 
 
-        // GET: Show form to issue a book
+   
         public async Task<IActionResult> IssueBook()
         {
             var students = await _userRepository.GetAllStudentsAsync();
-            var books = await _bookRepository.GetAllAvailableAsync(); // only books with AvailableQnt > 0
+            var books = await _bookRepository.GetAllAvailableAsync(); 
 
             ViewBag.Students = students;
             ViewBag.Books = books;
 
             return View();
         }
-
+        //-----------------------------------------
         [HttpPost]
         public async Task<IActionResult> IssueBook(int studentId, int bookId, int days)
         {
@@ -230,7 +273,7 @@ namespace Library_Management_System.Controllers
         }
 
     
-
+//---------------------------------------------------
 
         [HttpPost]
         public async Task<IActionResult> ReturnBook(int rentId)
@@ -275,20 +318,23 @@ namespace Library_Management_System.Controllers
             return RedirectToAction(nameof(IssuedBooks));
         }
 
-        public async Task<IActionResult> Penalties(string status = "all")
+        public async Task<IActionResult> Penalties(string? status = "all", string? search = "", int page = 1)
         {
-            var penalties = await _penaltyRepository.GetAllAsync();
+            int pageSize = 10;
 
-            penalties = status.ToLower() switch
-            {
-                "paid" => penalties.Where(p => p.IsPaid),
-                "unpaid" => penalties.Where(p => !p.IsPaid),
-                _ => penalties
-            };
+            var (penalties, totalCount) = await _penaltyRepository.GetPaginatedAsync(status, search, page, pageSize);
 
             ViewBag.StatusFilter = status;
+            ViewBag.Search = search;
+            ViewBag.Page = page;
+            ViewBag.PageSize = pageSize;
+            ViewBag.TotalCount = totalCount;
+            ViewBag.TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
             return View(penalties);
         }
+
+
 
 
         public async Task<IActionResult> EditPenalty(int id)
@@ -332,6 +378,7 @@ namespace Library_Management_System.Controllers
             return View(paginatedRents);
         }
 
+   
 
 
 

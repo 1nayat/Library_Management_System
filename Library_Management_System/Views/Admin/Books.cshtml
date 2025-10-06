@@ -9,7 +9,7 @@
 
 <div class="mb-2 d-flex justify-content-between">
     <!-- Back to Dashboard -->
-    <a class="btn btn-secondary" href="/Dashboard/Index">Back to Dashboard</a>
+    <a class="btn btn-secondary" asp-controller="Admin" asp-action="Dashboard">Back to Dashboard</a>
 
     <!-- Add Book -->
     <a class="btn btn-success" href="/Admin/CreateBook">Add Book</a>
@@ -27,6 +27,7 @@
 <table class="table table-bordered table-striped">
     <thead>
         <tr>
+            <th>Image</th>
             <th>Book ID</th>
             <th>Name</th>
             <th>Author</th>
@@ -41,6 +42,16 @@
         @foreach (var book in Model.Items)
         {
             <tr>
+                <td>
+                    @if (!string.IsNullOrEmpty(book.Image))
+                    {
+                        <img src="@book.Image" alt="@book.BookName" class="book-image" />
+                    }
+                    else
+                    {
+                        <span>No Image</span>
+                    }
+                </td>
                 <td>@book.BookID</td>
                 <td>@book.BookName</td>
                 <td>@book.Author</td>
@@ -85,3 +96,21 @@
         </ul>
     </nav>
 }
+
+<style>
+   
+    .book-image {
+        height: 80px;
+        width: auto;
+        transition: transform 0.3s ease;
+        position: relative; 
+        z-index: 1;
+    }
+
+        .book-image:hover {
+            transform: scale(3); 
+            position: relative;
+            z-index: 999; 
+        }
+</style>
+
