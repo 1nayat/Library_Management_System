@@ -25,29 +25,48 @@ namespace Library_Management_System.Controllers
             _penaltyRepository = penaltyRepository;
         }
 
-        public async Task<IActionResult> Dashboard()
+     
+        private IActionResult HandleNotFound(string entityName, string redirectAction)
         {
-            var students = await _userRepository.GetAllAsync();
-            var books = await _bookRepository.GetAllAsync();
-            var rents = await _rentRepository.GetAllIssuedAsync();
-
-            ViewBag.TotalStudents = students.Count();
-            ViewBag.TotalBooks = books.Count();
-            ViewBag.TotalIssued = rents.Count();
-
-            return View();
+            TempData["Error"] = $"{entityName} not found.";
+            return RedirectToAction(redirectAction);
         }
 
+        public async Task<IActionResult> Dashboard()
+        {
+            try
+            {
+                var students = await _userRepository.GetAllAsync();
+                var books = await _bookRepository.GetAllAsync();
+                var rents = await _rentRepository.GetAllIssuedAsync();
+
+                ViewBag.TotalStudents = students.Count();
+                ViewBag.TotalBooks = books.Count();
+                ViewBag.TotalIssued = rents.Count();
+
+                return View();
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Failed to load dashboard: " + ex.Message;
+                return View();
+            }
+        }
 
         public async Task<IActionResult> Students(string search, int page = 1)
         {
-            int pageSize = 10; 
-
-            var students = await _userRepository.GetPaginatedStudentsAsync(search, page, pageSize);
-
-            ViewBag.SearchTerm = search ?? "";
-
-            return View(students); 
+            try
+            {
+                int pageSize = 10;
+                var students = await _userRepository.GetPaginatedStudentsAsync(search, page, pageSize);
+                ViewBag.SearchTerm = search ?? "";
+                return View(students);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Failed to load students: " + ex.Message;
+                return View(Enumerable.Empty<User>());
+            }
         }
 
         public IActionResult CreateStudent() => View();
@@ -55,332 +74,495 @@ namespace Library_Management_System.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateStudent(User student)
         {
-            if (ModelState.IsValid)
+            try
             {
-                student.Role = "Student"; 
-                await _userRepository.CreateAsync(student);
-                return RedirectToAction(nameof(Students));
+                if (ModelState.IsValid)
+                {
+                    student.Role = "Student";
+                    await _userRepository.CreateAsync(student);
+                    TempData["Success"] = "Student created successfully.";
+                    return RedirectToAction(nameof(Students));
+                }
+                return View(student);
             }
-            return View(student);
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Failed to create student: " + ex.Message;
+                return View(student);
+            }
         }
 
         public async Task<IActionResult> EditStudent(int id)
         {
-            var student = await _userRepository.GetByIdAsync(id);
-            if (student == null) return NotFound();
-            return View(student);
+            try
+            {
+                var student = await _userRepository.GetByIdAsync(id);
+                if (student == null)
+                    return HandleNotFound($"Student with ID {id}", nameof(Students));
+
+                return View(student);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Failed to load student: " + ex.Message;
+                return RedirectToAction(nameof(Students));
+            }
         }
-        ///--------------------------------------------------------------
+
         [HttpPost]
         public async Task<IActionResult> EditStudent(User student)
         {
-            if (ModelState.IsValid)
+            try
             {
-              
-                var existingStudent = await _userRepository.GetByIdAsync(student.Id);
-                if (existingStudent == null) return NotFound();
-
-                if (!string.IsNullOrEmpty(student.PasswordHash))
+                if (ModelState.IsValid)
                 {
-                    student.PasswordHash = BCrypt.Net.BCrypt.HashPassword(student.PasswordHash);
-                }
-                else
-                {
-                    
-                    student.PasswordHash = existingStudent.PasswordHash;
-                }
+                    var existingStudent = await _userRepository.GetByIdAsync(student.Id);
+                    if (existingStudent == null)
+                        return HandleNotFound($"Student with ID {student.Id}", nameof(Students));
 
-                await _userRepository.UpdateAsync(student);
-                return RedirectToAction(nameof(Students));
+                    if (!string.IsNullOrEmpty(student.PasswordHash))
+                        student.PasswordHash = BCrypt.Net.BCrypt.HashPassword(student.PasswordHash);
+                    else
+                        student.PasswordHash = existingStudent.PasswordHash;
+
+                    await _userRepository.UpdateAsync(student);
+                    TempData["Success"] = "Student updated successfully.";
+                    return RedirectToAction(nameof(Students));
+                }
+                return View(student);
             }
-
-            return View(student);
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Failed to update student: " + ex.Message;
+                return View(student);
+            }
         }
-//----------------------------------------------------------
 
         public async Task<IActionResult> DeleteStudent(int id)
         {
-            await _userRepository.DeleteAsync(id);
+            try
+            {
+                var student = await _userRepository.GetByIdAsync(id);
+                if (student == null)
+                    return HandleNotFound($"Student with ID {id}", nameof(Students));
+
+                await _userRepository.DeleteAsync(id);
+                TempData["Success"] = "Student deleted successfully.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Failed to delete student: " + ex.Message;
+            }
             return RedirectToAction(nameof(Students));
         }
 
-      
         public async Task<IActionResult> Books(string search, int page = 1)
         {
-            int pageSize = 10;
-
-            var paginatedBooks = await _bookRepository.GetPaginatedBooksAsync(search, page, pageSize);
-
-            return View(paginatedBooks);
+            try
+            {
+                int pageSize = 10;
+                var paginatedBooks = await _bookRepository.GetPaginatedBooksAsync(search, page, pageSize);
+                return View(paginatedBooks);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Failed to load books: " + ex.Message;
+                return View(Enumerable.Empty<Book>());
+            }
         }
+
         public IActionResult CreateBook() => View();
-        //------------------------------------------------------
+
         [HttpPost]
         public async Task<IActionResult> CreateBook(Book book, IFormFile? ImageFile)
         {
-            if (ModelState.IsValid)
+            try
             {
-                if (ImageFile != null && ImageFile.Length > 0)
+                if (ModelState.IsValid)
                 {
-                    
-                    var uploads = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/books");
-                    if (!Directory.Exists(uploads)) Directory.CreateDirectory(uploads);
-
-                    var fileName = Guid.NewGuid() + Path.GetExtension(ImageFile.FileName);
-                    var filePath = Path.Combine(uploads, fileName);
-
-                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    if (ImageFile != null && ImageFile.Length > 0)
                     {
+                        var uploads = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/books");
+                        if (!Directory.Exists(uploads)) Directory.CreateDirectory(uploads);
+
+                        var fileName = Guid.NewGuid() + Path.GetExtension(ImageFile.FileName);
+                        var filePath = Path.Combine(uploads, fileName);
+
+                        using var stream = new FileStream(filePath, FileMode.Create);
                         await ImageFile.CopyToAsync(stream);
+                        book.Image = "/images/books/" + fileName;
                     }
 
-                    book.Image = "/images/books/" + fileName; 
+                    await _bookRepository.InsertAsync(book);
+                    TempData["Success"] = "Book created successfully.";
+                    return RedirectToAction(nameof(Books));
                 }
-
-                await _bookRepository.InsertAsync(book);
-                return RedirectToAction(nameof(Books));
+                return View(book);
             }
-            return View(book);
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Failed to create book: " + ex.Message;
+                return View(book);
+            }
         }
-
 
         public async Task<IActionResult> EditBook(int id)
         {
-            var book = await _bookRepository.GetByIdAsync(id);
-            if (book == null) return NotFound();
-            return View(book);
+            try
+            {
+                var book = await _bookRepository.GetByIdAsync(id);
+                if (book == null)
+                    return HandleNotFound($"Book with ID {id}", nameof(Books));
+
+                return View(book);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Failed to load book: " + ex.Message;
+                return RedirectToAction(nameof(Books));
+            }
         }
-//---------------------------------------------------
+
         [HttpPost]
         public async Task<IActionResult> EditBook(Book book, IFormFile? ImageFile)
         {
-            if (ModelState.IsValid)
+            try
             {
-                var existingBook = await _bookRepository.GetByIdAsync(book.BookID);
-                if (existingBook == null) return NotFound();
-
-                if (ImageFile != null && ImageFile.Length > 0)
+                if (ModelState.IsValid)
                 {
-                  
-                    var uploads = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/books");
-                    if (!Directory.Exists(uploads)) Directory.CreateDirectory(uploads);
+                    var existingBook = await _bookRepository.GetByIdAsync(book.BookID);
+                    if (existingBook == null)
+                        return HandleNotFound($"Book with ID {book.BookID}", nameof(Books));
 
-                    var fileName = Guid.NewGuid() + Path.GetExtension(ImageFile.FileName);
-                    var filePath = Path.Combine(uploads, fileName);
-
-                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    if (ImageFile != null && ImageFile.Length > 0)
                     {
+                        var uploads = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/books");
+                        if (!Directory.Exists(uploads)) Directory.CreateDirectory(uploads);
+
+                        var fileName = Guid.NewGuid() + Path.GetExtension(ImageFile.FileName);
+                        var filePath = Path.Combine(uploads, fileName);
+
+                        using var stream = new FileStream(filePath, FileMode.Create);
                         await ImageFile.CopyToAsync(stream);
+
+                        book.Image = "/images/books/" + fileName;
+                    }
+                    else
+                    {
+                        book.Image = existingBook.Image;
                     }
 
-                    book.Image = "/images/books/" + fileName;
+                    await _bookRepository.UpdateAsync(book);
+                    TempData["Success"] = "Book updated successfully.";
+                    return RedirectToAction(nameof(Books));
                 }
-                else
-                {
-                  
-                    book.Image = existingBook.Image;
-                }
-
-                await _bookRepository.UpdateAsync(book);
-                return RedirectToAction(nameof(Books));
+                return View(book);
             }
-            return View(book);
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Failed to update book: " + ex.Message;
+                return View(book);
+            }
         }
-
 
         public async Task<IActionResult> DeleteBook(int id)
         {
-            await _bookRepository.DeleteAsync(id);
+            try
+            {
+                var book = await _bookRepository.GetByIdAsync(id);
+                if (book == null)
+                    return HandleNotFound($"Book with ID {id}", nameof(Books));
+
+                await _bookRepository.DeleteAsync(id);
+                TempData["Success"] = "Book deleted successfully.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Failed to delete book: " + ex.Message;
+            }
             return RedirectToAction(nameof(Books));
         }
 
-
         public async Task<IActionResult> EditIssuedBook(int id)
         {
-            var rent = await _rentRepository.GetByIdAsync(id);
-            if (rent == null) return NotFound();
-            return View(rent);
+            try
+            {
+                var rent = await _rentRepository.GetByIdAsync(id);
+                if (rent == null)
+                    return HandleNotFound($"Issued book with ID {id}", nameof(IssuedBooks));
+
+                return View(rent);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Failed to load issued book: " + ex.Message;
+                return RedirectToAction(nameof(IssuedBooks));
+            }
         }
-//-----------------------------------------------------------
+
         [HttpPost]
         public async Task<IActionResult> EditIssuedBook(Rent rent)
         {
-            if (ModelState.IsValid)
+            try
             {
-                rent.ReturnDate = rent.IssueDate.AddDays(rent.Days);
+                if (ModelState.IsValid)
+                {
+                    var existingRent = await _rentRepository.GetByIdAsync(rent.RentID);
+                    if (existingRent == null)
+                        return HandleNotFound($"Issued book with ID {rent.RentID}", nameof(IssuedBooks));
 
-                await _rentRepository.UpdateAsync(rent);
-                return RedirectToAction(nameof(IssuedBooks));
+                    rent.ReturnDate = rent.IssueDate.AddDays(rent.Days);
+                    await _rentRepository.UpdateAsync(rent);
+                    TempData["Success"] = "Issued book updated successfully.";
+                    return RedirectToAction(nameof(IssuedBooks));
+                }
+                return View(rent);
             }
-            return View(rent);
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Failed to update issued book: " + ex.Message;
+                return View(rent);
+            }
         }
 
         public async Task<IActionResult> DeleteIssuedBook(int id)
         {
-            await _rentRepository.DeleteAsync(id);
+            try
+            {
+                var rent = await _rentRepository.GetByIdAsync(id);
+                if (rent == null)
+                    return HandleNotFound($"Issued book with ID {id}", nameof(IssuedBooks));
+
+                await _rentRepository.DeleteAsync(id);
+                TempData["Success"] = "Issued book deleted successfully.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Failed to delete issued book: " + ex.Message;
+            }
             return RedirectToAction(nameof(IssuedBooks));
         }
 
-     
-        ///////////DAY2/////////////////
-
-
-
-
-   
         public async Task<IActionResult> IssueBook()
         {
-            var students = await _userRepository.GetAllStudentsAsync();
-            var books = await _bookRepository.GetAllAvailableAsync(); 
-
-            ViewBag.Students = students;
-            ViewBag.Books = books;
-
-            return View();
-        }
-        //-----------------------------------------
-        [HttpPost]
-        public async Task<IActionResult> IssueBook(int studentId, int bookId, int days)
-        {
-            var student = await _userRepository.GetByIdAsync(studentId);
-            var book = await _bookRepository.GetByIdAsync(bookId);
-
-            if (student == null || book == null || book.AvailableQnt <= 0)
+            try
             {
-                ModelState.AddModelError("", "Invalid student or book selection, or book not available.");
-
                 ViewBag.Students = await _userRepository.GetAllStudentsAsync();
                 ViewBag.Books = await _bookRepository.GetAllAvailableAsync();
                 return View();
             }
-
-            var rent = new Rent
+            catch (Exception ex)
             {
-                BookID = book.BookID,   
-                UserID = student.Id,
-                Days = days,
-                IssueDate = DateTime.Now,
-                Status = 1
-            };
-
-            await _rentRepository.InsertAsync(rent);
-
-            book.AvailableQnt -= 1;
-            book.RentQnt += 1;
-            await _bookRepository.UpdateAsync(book);
-
-            return RedirectToAction(nameof(IssuedBooks));
+                TempData["Error"] = "Failed to load issue book page: " + ex.Message;
+                return View();
+            }
         }
 
-    
-//---------------------------------------------------
+        [HttpPost]
+        public async Task<IActionResult> IssueBook(int studentId, int bookId, int days)
+        {
+            try
+            {
+                var student = await _userRepository.GetByIdAsync(studentId);
+                var book = await _bookRepository.GetByIdAsync(bookId);
+
+                if (student == null || book == null || book.AvailableQnt <= 0)
+                {
+                    TempData["Error"] = "Invalid student or book selection, or book not available.";
+                    ViewBag.Students = await _userRepository.GetAllStudentsAsync();
+                    ViewBag.Books = await _bookRepository.GetAllAvailableAsync();
+                    return View();
+                }
+
+                var rent = new Rent
+                {
+                    BookID = book.BookID,
+                    UserID = student.Id,
+                    Days = days,
+                    IssueDate = DateTime.Now,
+                    Status = 1
+                };
+
+                await _rentRepository.InsertAsync(rent);
+
+                book.AvailableQnt -= 1;
+                book.RentQnt += 1;
+                await _bookRepository.UpdateAsync(book);
+
+                TempData["Success"] = "Book issued successfully.";
+                return RedirectToAction(nameof(IssuedBooks));
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Failed to issue book: " + ex.Message;
+                return RedirectToAction(nameof(IssueBook));
+            }
+        }
 
         [HttpPost]
         public async Task<IActionResult> ReturnBook(int rentId)
         {
-            var rent = await _rentRepository.GetByIdAsync(rentId);
-            if (rent == null) return NotFound();
-
-            rent.Status = 0;
-            rent.ReturnDate = DateTime.Now;
-            await _rentRepository.UpdateAsync(rent);
-
-            var book = await _bookRepository.GetByIdAsync(rent.BookID);
-
-            double penaltyAmount = 0;
-            if (rent.ReturnDate > rent.IssueDate.AddDays(rent.Days))
+            try
             {
-                int lateDays = (rent.ReturnDate.Value - rent.IssueDate.AddDays(rent.Days)).Days;
-                penaltyAmount = lateDays * 10; 
-            }
+                var rent = await _rentRepository.GetByIdAsync(rentId);
+                if (rent == null)
+                    return HandleNotFound($"Issued book with ID {rentId}", nameof(IssuedBooks));
 
-            if (penaltyAmount > 0)
-            {
-                var penalty = new Penalty
+                rent.Status = 0;
+                rent.ReturnDate = DateTime.Now;
+                await _rentRepository.UpdateAsync(rent);
+
+                var book = await _bookRepository.GetByIdAsync(rent.BookID);
+
+                double penaltyAmount = 0;
+                if (rent.ReturnDate > rent.IssueDate.AddDays(rent.Days))
                 {
-                    UserID = rent.UserID,
-                    BookID = book.BookID,           
-                    BookName = book.BookName,
-                    Price = book.Price,             
-                    PenaltyAmount = penaltyAmount,
-                    Detail = $"Late return, {penaltyAmount} penalty applied.",
-                    EntryDate = DateTime.Now
-                };
+                    int lateDays = (rent.ReturnDate.Value - rent.IssueDate.AddDays(rent.Days)).Days;
+                    penaltyAmount = lateDays * 10;
+                }
 
-                await _penaltyRepository.InsertAsync(penalty);
+                if (penaltyAmount > 0)
+                {
+                    var penalty = new Penalty
+                    {
+                        UserID = rent.UserID,
+                        BookID = book.BookID,
+                        BookName = book.BookName,
+                        Price = book.Price,
+                        PenaltyAmount = penaltyAmount,
+                        Detail = $"Late return, {penaltyAmount} penalty applied.",
+                        EntryDate = DateTime.Now
+                    };
+                    await _penaltyRepository.InsertAsync(penalty);
+                }
+
+                book.AvailableQnt += 1;
+                book.RentQnt -= 1;
+                await _bookRepository.UpdateAsync(book);
+
+                TempData["Success"] = "Book returned successfully.";
+                return RedirectToAction(nameof(IssuedBooks));
             }
-
-           
-            book.AvailableQnt += 1;
-            book.RentQnt -= 1;
-            await _bookRepository.UpdateAsync(book);
-
-            return RedirectToAction(nameof(IssuedBooks));
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Failed to return book: " + ex.Message;
+                return RedirectToAction(nameof(IssuedBooks));
+            }
         }
 
         public async Task<IActionResult> Penalties(string? status = "all", string? search = "", int page = 1)
         {
-            int pageSize = 10;
+            try
+            {
+                int pageSize = 10;
+                var (penalties, totalCount) = await _penaltyRepository.GetPaginatedAsync(status, search, page, pageSize);
 
-            var (penalties, totalCount) = await _penaltyRepository.GetPaginatedAsync(status, search, page, pageSize);
+                ViewBag.StatusFilter = status;
+                ViewBag.Search = search;
+                ViewBag.Page = page;
+                ViewBag.PageSize = pageSize;
+                ViewBag.TotalCount = totalCount;
+                ViewBag.TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
 
-            ViewBag.StatusFilter = status;
-            ViewBag.Search = search;
-            ViewBag.Page = page;
-            ViewBag.PageSize = pageSize;
-            ViewBag.TotalCount = totalCount;
-            ViewBag.TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
-
-            return View(penalties);
+                return View(penalties);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Failed to load penalties: " + ex.Message;
+                return View(Enumerable.Empty<Penalty>());
+            }
         }
-
-
-
 
         public async Task<IActionResult> EditPenalty(int id)
         {
-            var penalty = await _penaltyRepository.GetByIdAsync(id);
-            if (penalty == null) return NotFound();
-            return View(penalty);
+            try
+            {
+                var penalty = await _penaltyRepository.GetByIdAsync(id);
+                if (penalty == null)
+                    return HandleNotFound($"Penalty with ID {id}", nameof(Penalties));
+
+                return View(penalty);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Failed to load penalty: " + ex.Message;
+                return RedirectToAction(nameof(Penalties));
+            }
         }
 
         [HttpPost]
         public async Task<IActionResult> EditPenalty(Penalty penalty)
         {
-            if (!ModelState.IsValid) return View(penalty);
+            try
+            {
+                if (!ModelState.IsValid) return View(penalty);
 
-            await _penaltyRepository.UpdateAsync(penalty);
-            return RedirectToAction(nameof(Penalties));
+                var existingPenalty = await _penaltyRepository.GetByIdAsync(penalty.PenaltyID);
+                if (existingPenalty == null)
+                    return HandleNotFound($"Penalty with ID {penalty.PenaltyID}", nameof(Penalties));
+
+                await _penaltyRepository.UpdateAsync(penalty);
+                TempData["Success"] = "Penalty updated successfully.";
+                return RedirectToAction(nameof(Penalties));
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Failed to update penalty: " + ex.Message;
+                return View(penalty);
+            }
         }
 
         [HttpPost]
         public async Task<IActionResult> DeletePenalty(int id)
         {
-            await _penaltyRepository.DeleteAsync(id);
+            try
+            {
+                var penalty = await _penaltyRepository.GetByIdAsync(id);
+                if (penalty == null)
+                    return HandleNotFound($"Penalty with ID {id}", nameof(Penalties));
+
+                await _penaltyRepository.DeleteAsync(id);
+                TempData["Success"] = "Penalty deleted successfully.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Failed to delete penalty: " + ex.Message;
+            }
             return RedirectToAction(nameof(Penalties));
         }
 
         [HttpPost]
         public async Task<IActionResult> MarkPenaltyAsPaid(int id)
         {
-            await _penaltyRepository.MarkAsPaidAsync(id);
+            try
+            {
+                var penalty = await _penaltyRepository.GetByIdAsync(id);
+                if (penalty == null)
+                    return HandleNotFound($"Penalty with ID {id}", nameof(Penalties));
+
+                await _penaltyRepository.MarkAsPaidAsync(id);
+                TempData["Success"] = "Penalty marked as paid.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Failed to mark penalty as paid: " + ex.Message;
+            }
             return RedirectToAction(nameof(Penalties));
         }
-        ///////////////
-        ///
 
         public async Task<IActionResult> IssuedBooks(string search, int page = 1)
         {
-            int pageSize = 10;
-
-            var paginatedRents = await _rentRepository.GetPaginatedIssuedBooksAsync(search, page, pageSize);
-
-            return View(paginatedRents);
+            try
+            {
+                int pageSize = 10;
+                var paginatedRents = await _rentRepository.GetPaginatedIssuedBooksAsync(search, page, pageSize);
+                return View(paginatedRents);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Failed to load issued books: " + ex.Message;
+                return View(Enumerable.Empty<Rent>());
+            }
         }
-
-   
-
-
-
     }
 }

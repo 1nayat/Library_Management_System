@@ -27,7 +27,7 @@ namespace Library_Management_System.Repositories
             using var conn = _dbContext.CreateConnection();
             const string sql = "SELECT * FROM Book4 WHERE BookID=@Id";
             var book = await conn.QuerySingleOrDefaultAsync<Book>(sql, new { Id = id });
-            return book;
+            return book! ;
         }
 
         public async Task InsertAsync(Book book)
@@ -111,7 +111,7 @@ namespace Library_Management_System.Repositories
                 AND (@Search IS NULL OR BookName LIKE '%' + @Search + '%' OR Author LIKE '%' + @Search + '%')";
 
             string sql = @"
-                SELECT * 
+                SELECT *  
                 FROM Book4
                 WHERE AvailableQnt > 0
                 AND (@Search IS NULL OR BookName LIKE '%' + @Search + '%' OR Author LIKE '%' + @Search + '%')
