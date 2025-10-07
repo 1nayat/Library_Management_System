@@ -119,7 +119,13 @@ namespace Library_Management_System.Controllers
                     var existingStudent = await _userRepository.GetByIdAsync(student.Id);
                     if (existingStudent == null)
                         return HandleNotFound($"Student with ID {student.Id}", nameof(Students));
-
+                    var userWithSameEmail = await _userRepository.GetByEmailAsync(student.Email);
+                    if (userWithSameEmail != null && userWithSameEmail.Id != student.Id)
+                    {
+                        ModelState.AddModelError("Email", "This email is already in use by another student.");
+                        return View(student);
+                    }
+                
                     if (!string.IsNullOrEmpty(student.PasswordHash))
                         student.PasswordHash = BCrypt.Net.BCrypt.HashPassword(student.PasswordHash);
                     else

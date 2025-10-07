@@ -2,32 +2,83 @@
 
 @{
     ViewData["Title"] = "My Penalties";
+    var paidPenalties = Model.Where(p => p.IsPaid);
+    var unpaidPenalties = Model.Where(p => !p.IsPaid);
 }
 
 <h2>My Penalties</h2>
 
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Book</th>
-            <th>Penalty Amount</th>
-            <th>Details</th>
-            <th>Date</th>
-            <th>Status</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var penalty in Model)
-        {
-            <tr>
-                <td>@penalty.BookName</td>
-                <td>@penalty.PenaltyAmount</td>
-                <td>@penalty.Detail</td>
-                <td>@penalty.EntryDate.ToString("yyyy-MM-dd")</td>
-                <td>@(penalty.IsPaid ? "Paid" : "Pending")</td>
-            </tr>
-        }
-    </tbody>
-</table>
+@if (!Model.Any())
+{
+    <p>No penalties found.</p>
+}
+else
+{
+    <!-- Unpaid Penalties Section -->
+    <h4 class="text-danger mt-4">Pending Penalties</h4>
+    @if (unpaidPenalties.Any())
+    {
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Book</th>
+                    <th>Penalty Amount</th>
+                    <th>Details</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var penalty in unpaidPenalties)
+                {
+                    <tr>
+                        <td>@penalty.BookName</td>
+                        <td>@penalty.PenaltyAmount</td>
+                        <td>@penalty.Detail</td>
+                        <td>@penalty.EntryDate.ToString("yyyy-MM-dd")</td>
+                        <td><span class="badge bg-danger">Pending</span></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p>No pending penalties.</p>
+    }
 
-<a class="btn btn-secondary" href="/Student/Dashboard">Back to Dashboard</a>
+    <!-- Paid Penalties Section -->
+    <h4 class="text-success mt-4">Paid Penalties</h4>
+    @if (paidPenalties.Any())
+    {
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Book</th>
+                    <th>Penalty Amount</th>
+                    <th>Details</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var penalty in paidPenalties)
+                {
+                    <tr>
+                        <td>@penalty.BookName</td>
+                        <td>@penalty.PenaltyAmount</td>
+                        <td>@penalty.Detail</td>
+                        <td>@penalty.EntryDate.ToString("yyyy-MM-dd")</td>
+                        <td><span class="badge bg-success">Paid</span></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p>No paid penalties.</p>
+    }
+}
+
+<a class="btn btn-secondary mt-3" href="/Student/Dashboard">Back to Dashboard</a>
