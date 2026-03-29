@@ -4,7 +4,7 @@ A web-based Library Management System built using ASP.NET Core that supports rol
 This system enables efficient management of books, users, borrowing records, and fine calculation while maintaining clear separation of responsibilities through a layered structure.
 
 Features 
-Role-Based Access Control (Admin / User)
+Role-Based Access Control (Admin / User) 
 Book Management (Add, Update, Delete, View)
 Borrow and Return Book Workflow
 Penalty Calculation for Late Returns
