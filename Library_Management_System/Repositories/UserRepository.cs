@@ -15,11 +15,14 @@ namespace Library_Management_System.Repositories
         public async Task<User?> GetByEmailAsync(string email)
         {
             using var conn = _db.CreateConnection();
-            //return db connection obj
-            const string sql = "SELECT * FROM [Users4] WHERE Email = @Email";
+
+            const string sql = @"
+        SELECT * FROM [Users4] 
+        WHERE LOWER(Email) = LOWER(@Email)
+    ";
+
             return await conn.QuerySingleOrDefaultAsync<User>(sql, new { Email = email });
         }
-
         public async Task<User?> GetByIdAsync(int id)
         {
             using var conn = _db.CreateConnection();
@@ -27,14 +30,14 @@ namespace Library_Management_System.Repositories
             return await conn.QuerySingleOrDefaultAsync<User>(sql, new { Id = id });
         }
 
+        // ✅ FIXED METHOD (NO DOUBLE HASHING)
         public async Task<int> CreateAsync(User user)
         {
             if (user.CreatedAt == default)
                 user.CreatedAt = DateTime.Now;
 
-            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(user.PasswordHash);
-
             using var conn = _db.CreateConnection();
+
             const string sql = @"
                 INSERT INTO [Users4] (Name, Email, PasswordHash, Role, Image, CreatedAt)
                 OUTPUT INSERTED.Id
@@ -71,6 +74,7 @@ namespace Library_Management_System.Repositories
         {
             return BCrypt.Net.BCrypt.Verify(plainPassword, hashedPassword);
         }
+
         public async Task<IEnumerable<User>> GetAllStudentsAsync()
         {
             using var conn = _db.CreateConnection();
@@ -84,8 +88,6 @@ namespace Library_Management_System.Repositories
             const string sql = "SELECT * FROM [Users4]";
             return await conn.QueryAsync<User>(sql);
         }
-        /////////////////////
-        ///
 
         public async Task<PaginatedList<User>> GetPaginatedStudentsAsync(string search, int page, int pageSize)
         {
@@ -100,17 +102,22 @@ namespace Library_Management_System.Repositories
 
             var students = await conn.QueryAsync<User>(
                 sql,
-                new { Search = $"%{search}%", Offset = (page - 1) * pageSize, PageSize = pageSize });
+                new
+                {
+                    Search = $"%{search}%",
+                    Offset = (page - 1) * pageSize,
+                    PageSize = pageSize
+                });
 
-          
             var countSql = "SELECT COUNT(*) FROM Users4 WHERE Role = 'Student'";
             if (!string.IsNullOrEmpty(search))
                 countSql += " AND Name LIKE @Search";
 
-            int totalCount = await conn.ExecuteScalarAsync<int>(countSql, new { Search = $"%{search}%" });
+            int totalCount = await conn.ExecuteScalarAsync<int>(
+                countSql,
+                new { Search = $"%{search}%" });
 
             return new PaginatedList<User>(students.ToList(), totalCount, page, pageSize);
         }
-
     }
 }

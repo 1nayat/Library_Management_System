@@ -27,34 +27,52 @@ namespace Library_Management_System.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> LoginPost(string email, string password)
         {
-            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+            try
             {
-                ModelState.AddModelError("", "Email and password are required.");
-                return View("Login");
+                // ✅ Normalize input
+                email = email?.Trim().ToLower();
+                password = password?.Trim();
+
+                if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+                {
+                    ModelState.AddModelError("", "Email and password are required.");
+                    return View("Login");
+                }
+
+                var user = await _userRepo.GetByEmailAsync(email);
+
+                if (user == null)
+                {
+                    ModelState.AddModelError("", "User not found.");
+                    return View("Login");
+                }
+
+                // ✅ Safe password verification
+                if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+                {
+                    ModelState.AddModelError("", "Invalid password.");
+                    return View("Login");
+                }
+
+                var token = GenerateJwtToken(user);
+
+                Response.Cookies.Append("jwtToken", token, new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = false,
+                    SameSite = SameSiteMode.Lax,
+                    Expires = DateTimeOffset.UtcNow.AddMinutes(_config.GetValue<int>("Jwt:ExpiryMinutes"))
+                });
+
+                return user.Role.Equals("Admin", StringComparison.OrdinalIgnoreCase)
+                    ? RedirectToAction("Dashboard", "Admin")
+                    : RedirectToAction("Dashboard", "Student");
             }
-
-            var user = await _userRepo.GetByEmailAsync(email);
-            if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+            catch (Exception ex)
             {
-                ModelState.AddModelError("", "Invalid credentials.");
-                return View("Login");
+                return Content(ex.ToString());
             }
-
-            var token = GenerateJwtToken(user);
-
-            Response.Cookies.Append("jwtToken", token, new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = false, 
-                SameSite = SameSiteMode.Lax,
-                Expires = DateTimeOffset.UtcNow.AddMinutes(_config.GetValue<int>("Jwt:ExpiryMinutes"))
-            });
-
-            return user.Role.Equals("Admin", StringComparison.OrdinalIgnoreCase)
-                ? RedirectToAction("Dashboard", "Admin")
-                : RedirectToAction("Dashboard", "Student");
         }
-
         [HttpGet]
         public IActionResult Register() => View();
 
@@ -62,42 +80,49 @@ namespace Library_Management_System.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RegisterPost(string name, string email, string password)
         {
-            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+            try
             {
-                ModelState.AddModelError("", "Email and password are required.");
-                return View("Register");
+                if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+                {
+                    ModelState.AddModelError("", "Email and password are required.");
+                    return View("Register");
+                }
+
+                var existing = await _userRepo.GetByEmailAsync(email);
+                if (existing != null)
+                {
+                    ModelState.AddModelError("", "Email is already registered.");
+                    return View("Register");
+                }
+
+                var user = new User
+                {
+                    Name = name?.Trim(),
+                    Email = email.Trim(),
+                    Role = "Student",
+                    CreatedAt = DateTime.UtcNow,
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(password)
+                };
+
+                var id = await _userRepo.CreateAsync(user);
+                user.Id = id;
+
+                var token = GenerateJwtToken(user);
+
+                Response.Cookies.Append("jwtToken", token, new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = false,
+                    SameSite = SameSiteMode.Lax,
+                    Expires = DateTimeOffset.UtcNow.AddMinutes(_config.GetValue<int>("Jwt:ExpiryMinutes"))
+                });
+
+                return RedirectToAction("Dashboard", "Student");
             }
-
-            var existing = await _userRepo.GetByEmailAsync(email);
-            if (existing != null)
+            catch (Exception ex)
             {
-                ModelState.AddModelError("", "Email is already registered.");
-                return View("Register");
+                return Content(ex.ToString());
             }
-
-            var user = new User
-            {
-                Name = name.Trim(),
-                Email = email.Trim(),
-                Role = "Student",
-                CreatedAt = DateTime.UtcNow,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(password)
-            };
-
-            var id = await _userRepo.CreateAsync(user);
-            user.Id = id;
-
-        
-            var token = GenerateJwtToken(user);
-            Response.Cookies.Append("jwtToken", token, new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = false,
-                SameSite = SameSiteMode.Lax,
-                Expires = DateTimeOffset.UtcNow.AddMinutes(_config.GetValue<int>("Jwt:ExpiryMinutes"))
-            });
-
-            return RedirectToAction("Dashboard", "Student");
         }
 
         [HttpPost]
@@ -114,18 +139,22 @@ namespace Library_Management_System.Controllers
         {
             var jwtSection = _config.GetSection("Jwt");
             var key = jwtSection.GetValue<string>("Key");
+
+            if (string.IsNullOrEmpty(key))
+                throw new Exception("JWT Key is missing!");
+
             var issuer = jwtSection.GetValue<string>("Issuer");
             var audience = jwtSection.GetValue<string>("Audience");
             var expiryMinutes = jwtSection.GetValue<int>("ExpiryMinutes");
 
-            var keyBytes = Encoding.UTF8.GetBytes(key!);
+            var keyBytes = Encoding.UTF8.GetBytes(key);
 
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Name, user.Name ?? ""),
                 new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Role, user.Role) 
+                new Claim(ClaimTypes.Role, user.Role)
             };
 
             var tokenDescriptor = new SecurityTokenDescriptor
@@ -134,7 +163,9 @@ namespace Library_Management_System.Controllers
                 Expires = DateTime.UtcNow.AddMinutes(expiryMinutes),
                 Issuer = issuer,
                 Audience = audience,
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(keyBytes), SecurityAlgorithms.HmacSha256)
+                SigningCredentials = new SigningCredentials(
+                    new SymmetricSecurityKey(keyBytes),
+                    SecurityAlgorithms.HmacSha256)
             };
 
             var tokenHandler = new JwtSecurityTokenHandler();

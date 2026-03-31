@@ -71,7 +71,11 @@ builder.Services.AddAuthorization();
 var app = builder.Build();
 
 // Middleware
-if (!app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage(); // ✅ shows real error
+}
+else
 {
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
