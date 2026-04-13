@@ -5,7 +5,7 @@ This system enables efficient management of books, users, borrowing records, and
 
 Features 
 Role-Based Access Control (Admin / User)  
-Book Management (Add, Update, Delete, View)
+Book Management (Add, Update, Delete, View) 
 Borrow and Return Book Workflow
 Penalty Calculation for Late Returns
 Pagination for large datasets 
