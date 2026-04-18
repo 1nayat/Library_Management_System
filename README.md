@@ -19,7 +19,7 @@ Manage books (Create, Update, Delete)
 View all users
 View borrowing history
 Manage penalties
-System-level control
+System-level control 
 
 User
 Browse available books
