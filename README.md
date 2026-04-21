@@ -8,7 +8,7 @@ Role-Based Access Control (Admin / User)
 Book Management (Add, Update, Delete, View)  
 Borrow and Return Book Workflow
 Penalty Calculation for Late Returns
-Pagination for large datasets 
+Pagination for large datasets  
 Authentication and Authorization
 Repository Pattern Implementation  
 Clean Project Structure 
