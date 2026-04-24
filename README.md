@@ -22,7 +22,7 @@ Manage penalties
 System-level control 
 
 User
-Browse available books
+Browse available books 
 Borrow books
 Return books
 View personal borrowing history
