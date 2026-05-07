@@ -15,7 +15,7 @@ Clean Project Structure
 Role-Based Access Control (RBAC) 
   
 Admin
-Manage books (Create, Update, Delete)
+Manage books (Create, Update, Delete) 
 View all users  
 View borrowing history
 Manage penalties
